@@ -52,3 +52,6 @@ venv.bak/
 # vim
 *.swo
 *.swp
+
+# project config
+config.yml

@@ -1,6 +1,10 @@
 agent:
     interfaces:
         - 
+    output:
+        - kafka:
+            host:
+            port:
         - 
 
 filter:

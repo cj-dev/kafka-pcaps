@@ -18,15 +18,16 @@ class KafkaWriter(object):
 
 class StdoutWriter(object):
 
-    def __init__(self):
-        pass
+    def __init__(self, config):
+        self.verbosity = config.get('verbosity', 0)
     
     def write(self, packet):
         print "Timestamp {time}, {summary}".format(
                 time=packet.time, summary=packet.summary())
         print "Src IP: {src}, Dst IP: {dst}".format(
                 src=packet['IP'].src, dst=packet['IP'].dst)
-        print hexdump(packet)
+        if self.verbosity >= 1:
+            print hexdump(packet)
 
 class Dispatcher(object):
     
@@ -36,15 +37,13 @@ class Dispatcher(object):
     def _select_writers(self, config):
         writers = []
 
-        # Currently, strings or dictionary items in output config list
         for output_method in config['agent']['output']:
-            if type(output_method) == str:
-                if output_method == "stdout":
-                    chosen_writer = StdoutWriter()
-            else:
-                kafka_config = output_method.get('kafka', False)
-                if kafka_config:
-                    chosen_writer = KafkaWriter(kafka_config)
+            stdout_config = output_method.get('stdout', None)
+            if stdout_config:
+                chosen_writer = StdoutWriter(stdout_config)
+            kafka_config = output_method.get('kafka', None)
+            if kafka_config:
+                chosen_writer = KafkaWriter(kafka_config)
             writers.append(chosen_writer)
 
         return writers

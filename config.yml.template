@@ -5,7 +5,8 @@ agent:
         - kafka:
             host:
             port:
-        - 
+        - stdout:
+            verbosity:
 
 filter:
     protocols:

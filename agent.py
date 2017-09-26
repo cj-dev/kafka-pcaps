@@ -13,5 +13,5 @@ if __name__ == "__main__":
     print "Running with config \n{0}".format(yaml.dump(config))
 
     dispatcher = Dispatcher(config)
-    captured = sniff(filter='tcp', prn=dispatcher.write_packet, count=2, store=0)
+    captured = sniff(filter='tcp', prn=dispatcher.write_packet, store=0)
     

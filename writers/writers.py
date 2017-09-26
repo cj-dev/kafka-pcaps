@@ -1,4 +1,5 @@
 from kafka import KafkaProducer
+from scapy.all import hexdump
 
 class KafkaWriter(object):
 
@@ -8,10 +9,12 @@ class KafkaWriter(object):
         server_string = "{host}:{port}".format(host=host, port=port)
         self.producer = KafkaProducer(bootstrap_servers=server_string)
     
-    def write(self, packet, topic):
-        pass
-        # future = self.producer.send(topic, b'test_message')
-        # result = future.get(timeout=30)
+    def write(self, packet):
+        if packet.haslayer('DNS'):
+            future = self.producer.send('dns_packets', str(packet))
+        else:
+            future = self.producer.send('catchall', str(packet))
+        result = future.get(timeout=30)
 
 class StdoutWriter(object):
 
@@ -19,16 +22,18 @@ class StdoutWriter(object):
         pass
     
     def write(self, packet):
-        print "Summary ", packet.sent_time, packet.summary()
-        print "Source and dest ", packet['IP'].src, packet['IP'].dst
-        print "Show() ", packet.show()
+        print "Timestamp {time}, {summary}".format(
+                time=packet.time, summary=packet.summary())
+        print "Src IP: {src}, Dst IP: {dst}".format(
+                src=packet['IP'].src, dst=packet['IP'].dst)
+        print hexdump(packet)
 
 class Dispatcher(object):
     
     def __init__(self, config):
-        self.writers = self.select_writers(config)
+        self.writers = self._select_writers(config)
 
-    def select_writers(self, config):
+    def _select_writers(self, config):
         writers = []
 
         # Currently, strings or dictionary items in output config list
@@ -40,7 +45,6 @@ class Dispatcher(object):
                 kafka_config = output_method.get('kafka', False)
                 if kafka_config:
                     chosen_writer = KafkaWriter(kafka_config)
-                    writers.append(chosen_writer)
             writers.append(chosen_writer)
 
         return writers

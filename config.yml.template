@@ -7,6 +7,11 @@ agent:
             port:
         - stdout:
             verbosity:
+analyst:
+    input:
+        - kafka:
+            host:
+            port:
 
 filter:
     protocols:

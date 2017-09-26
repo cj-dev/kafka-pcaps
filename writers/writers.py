@@ -19,5 +19,33 @@ class StdoutWriter(object):
         pass
     
     def write(self, packet):
-        # write packet to kafka
-        pass
+        print "Summary ", packet.sent_time, packet.summary()
+        print "Source and dest ", packet['IP'].src, packet['IP'].dst
+        print "Show() ", packet.show()
+
+class Dispatcher(object):
+    
+    def __init__(self, config):
+        self.writers = self.select_writers(config)
+
+    def select_writers(self, config):
+        writers = []
+
+        # Currently, strings or dictionary items in output config list
+        for output_method in config['agent']['output']:
+            if type(output_method) == str:
+                if output_method == "stdout":
+                    chosen_writer = StdoutWriter()
+            else:
+                kafka_config = output_method.get('kafka', False)
+                if kafka_config:
+                    chosen_writer = KafkaWriter(kafka_config)
+                    writers.append(chosen_writer)
+            writers.append(chosen_writer)
+
+        return writers
+
+    def write_packet(self, packet):
+        for writer in self.writers:
+            writer.write(packet)
+

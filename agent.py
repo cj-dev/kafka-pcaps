@@ -13,5 +13,8 @@ if __name__ == "__main__":
     print "Running with config \n{0}".format(yaml.dump(config))
 
     dispatcher = Dispatcher(config)
-    captured = sniff(filter='tcp', prn=dispatcher.write_packet, store=0)
+    
+    capture_ifaces = config['agent']['interfaces']
+    captured = sniff(iface=capture_ifaces, filter='tcp',
+            prn=dispatcher.write_packet, store=0)
     

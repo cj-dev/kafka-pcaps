@@ -1,5 +1,7 @@
 from kafka import KafkaProducer
-from scapy.all import hexdump
+from scapy.all import hexdump, PcapWriter
+import json
+import StringIO
 
 class KafkaWriter(object):
 
@@ -10,11 +12,14 @@ class KafkaWriter(object):
         self.producer = KafkaProducer(bootstrap_servers=server_string)
     
     def write(self, packet):
-        if packet.haslayer('DNS'):
-            future = self.producer.send('dns_packets', str(packet))
-        else:
-            future = self.producer.send('catchall', str(packet))
-        result = future.get(timeout=30)
+        fakepcap = StringIO.StringIO()
+        with PcapWriter(fakepcap) as writer:
+            writer.write(packet)
+            if packet.haslayer('DNS'):
+                future = self.producer.send('dns_packets', fakepcap.getvalue())
+            else:
+                future = self.producer.send('catchall', fakepcap.getvalue())
+            result = future.get(timeout=30)
 
 class StdoutWriter(object):
 

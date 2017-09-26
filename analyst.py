@@ -1,6 +1,7 @@
 import yaml
+import StringIO
 from kafka import KafkaConsumer
-from scapy.all import Ether
+from scapy.all import Ether, IP, hexdump, rdpcap
 
 if __name__ == "__main__":
 
@@ -20,5 +21,7 @@ if __name__ == "__main__":
     server_string = "{host}:{port}".format(host=host, port=port)
 
     consumer = KafkaConsumer('dns_packets', bootstrap_servers=server_string)
-    for packet in consumer:
-        print Ether(packet)
+    for message in consumer:
+        pcap = message.value[40:]
+        packet = Ether(pcap)
+        print packet.show()

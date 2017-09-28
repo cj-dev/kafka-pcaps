@@ -3,6 +3,9 @@ from scapy.all import hexdump, PcapWriter
 import json
 import StringIO
 
+import logging
+log_level = logging.DEBUG
+
 class KafkaWriter(object):
 
     def __init__(self, config):
@@ -12,14 +15,12 @@ class KafkaWriter(object):
         self.producer = KafkaProducer(bootstrap_servers=server_string)
     
     def write(self, packet):
-        fakepcap = StringIO.StringIO()
-        with PcapWriter(fakepcap) as writer:
-            writer.write(packet)
-            if packet.haslayer('DNS'):
-                future = self.producer.send('dns_packets', fakepcap.getvalue())
-            else:
-                future = self.producer.send('catchall', fakepcap.getvalue())
-            result = future.get(timeout=30)
+        packet_bytes = str(packet)
+        if packet.haslayer('DNS'):
+            future = self.producer.send('dns_packets', packet_bytes)
+        else:
+            future = self.producer.send('catchall', packet_bytes)
+        result = future.get(timeout=30)
 
 class StdoutWriter(object):
 
@@ -32,7 +33,7 @@ class StdoutWriter(object):
         print "Src IP: {src}, Dst IP: {dst}".format(
                 src=packet['IP'].src, dst=packet['IP'].dst)
         if self.verbosity >= 1:
-            print hexdump(packet)
+            hexdump(packet)
 
 class Dispatcher(object):
     

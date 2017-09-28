@@ -22,6 +22,7 @@ if __name__ == "__main__":
 
     consumer = KafkaConsumer('dns_packets', bootstrap_servers=server_string)
     for message in consumer:
-        pcap = message.value[40:]
-        packet = Ether(pcap)
-        print packet.show()
+        packet_bytes = message.value
+        print repr(packet_bytes)
+        packet = Ether(packet_bytes)
+        packet.show()

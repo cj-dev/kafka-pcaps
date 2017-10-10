@@ -18,6 +18,7 @@ class KafkaWriter(object):
         packet_bytes = str(packet)
         if packet.haslayer('DNS'):
             future = self.producer.send('dns_packets', packet_bytes)
+            future = self.producer.send('catchall', packet_bytes)
         else:
             future = self.producer.send('catchall', packet_bytes)
         result = future.get(timeout=30)

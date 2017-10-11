@@ -1,7 +1,7 @@
 from kafka import KafkaProducer
 from scapy.all import hexdump, PcapWriter
 import json
-import StringIO
+import base64
 
 import logging
 log_level = logging.DEBUG
@@ -15,7 +15,7 @@ class KafkaWriter(object):
         self.producer = KafkaProducer(bootstrap_servers=server_string)
     
     def write(self, packet):
-        packet_bytes = str(packet)
+        packet_bytes = base64.encodestring(str(packet))
         if packet.haslayer('DNS'):
             future = self.producer.send('dns_packets', packet_bytes)
             future = self.producer.send('catchall', packet_bytes)
@@ -35,6 +35,7 @@ class StdoutWriter(object):
                 src=packet['IP'].src, dst=packet['IP'].dst)
         if self.verbosity >= 1:
             hexdump(packet)
+            print base64.encodestring(str(packet))
 
 class Dispatcher(object):
     

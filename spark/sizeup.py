@@ -20,19 +20,15 @@ def packetmap(packet):
     else:
         return []
 
-if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        print("Usage: kafka_wordcount.py <zk> <topic>", file=sys.stderr)
-	exit(-1)
-
-    sc = SparkContext("local[2]", appName="PythonStreamingKafkaPCAPSizeup")
+def initialize_context(quorum, topic):
+    """ Initialize a streaming context given Zookeeper quorum host:port and kafka topic """
+    sc = SparkContext("local[2]", appName="StreamingKafkaPCAPSizeup")
     sc.setLogLevel("WARN")
-    ssc = StreamingContext(sc, 1)
 
     # log4jLogger = sc._jvm.org.apache.log4j
     # l4j_logger = log4jLogger.LogManager.getLogger(__name__)
 
-    quorum, topic = sys.argv[1:]
+    ssc = StreamingContext(sc, 1)
 
     stream = KafkaUtils.createStream(ssc,
             zkQuorum=quorum,
@@ -43,8 +39,27 @@ if __name__ == "__main__":
     pcaps = stream.map(lambda x: x[1])
     sizes = pcaps.flatMap(packetmap)
     reduced_sizes = sizes.reduceByKey(lambda a, b: a+b)
+    cumulative_sizes = sizes.reduceByKeyAndWindow(
+            func=lambda a, b: a+b,
+            invFunc=lambda a, b: a-b,
+            windowDuration=10,
+            slideDuration=1,
+            filterFunc=lambda x: x[1] != 0
+            )
 
-    reduced_sizes.pprint()
+    cumulative_sizes.pprint()
+
+    return ssc
+
+if __name__ == "__main__":
+    if len(sys.argv) != 3:
+        print("Usage: sizeup.py <zk> <topic>", file=sys.stderr)
+	exit(-1)
+
+    quorum, topic = sys.argv[1:]
+
+    ssc = StreamingContext.getOrCreate('/tmp/sizeup',
+            lambda: initialize_context(quorum, topic))
 
     ssc.start()
     ssc.awaitTermination()

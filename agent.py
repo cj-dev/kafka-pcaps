@@ -15,6 +15,6 @@ if __name__ == "__main__":
     dispatcher = Dispatcher(config)
     
     capture_ifaces = config['agent']['interfaces']
-    captured = sniff(iface=capture_ifaces, filter='ip', lfilter=lambda x: x.haslayer('DNS'),
+    captured = sniff(iface=capture_ifaces, filter='ip', lfilter=lambda x: x.haslayer('IP'),
             prn=dispatcher.write_packet, store=0)
     

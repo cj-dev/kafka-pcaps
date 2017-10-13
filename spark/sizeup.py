@@ -1,5 +1,13 @@
 #!/bin/env python
 
+""" Calculates the cumulative in/out bytes by tuple of (source IP, dest IP).
+
+Reads from Kafka, writes to stdout.
+
+Calculations occur 10 seconds in retrospect every second.
+
+"""
+
 from __future__ import print_function
 
 import sys
